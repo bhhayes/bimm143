@@ -1,0 +1,256 @@
+---
+title: "Class 9 Structural Bioinformatics (Pt.1)"
+author: "Brittney Hayes"
+date: "2024-02-14"
+output:
+  word_document: default
+---
+## Introduction to the RCSB PDB
+
+Download a CSV file from the PDB site 
+
+```{r}
+
+Data_Export_Summary <- read.csv("Data Export Summary.csv")
+des <- Data_Export_Summary 
+
+```
+
+# Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+
+```{r}
+# I kept getting error messages for this part so I manually calculated the sum for total structures, xray structures, and em structures. At first the sum function worked but I had problems when knitting.
+
+# Calculate the total number of structures
+total_structures <- 215908
+
+# Calculate the number of structures solved by X-Ray and Electron Microscopy
+xray_structures <- 182491
+em_structures <- 18889
+
+# Calculate the percentage of structures solved by X-Ray and Electron Microscopy
+percentage_xray <- (xray_structures / total_structures) * 100
+percentage_em <- (em_structures / total_structures) * 100
+
+# Display percentages
+percentage_xray
+percentage_em
+
+# Add the two percentages
+sum(percentage_xray,percentage_em)
+```
+Answer: For X-ray 84.52%, and for electron microscopy 8.75%. Together this is 93.27%. 
+
+# Q2: What proportion of structures in the PDB are protein?
+
+```{r}
+# Again I had issues with the sum function when knitting.
+
+# Calculate the amount of protein
+protein <- 211299
+
+#Display amount of protein
+protein
+
+# Find proportion or percent of structures that are proteins
+percentage_protein <- (protein/total_structures)*100
+
+#Display percentage of proteins
+percentage_protein
+```
+I included protein only, protein/oligosaccharide, and protein/NA and found that 97.9% of the structures are proteins.
+
+# Q3: Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB?
+
+The search for HIV displays 4,412 structures.
+
+## Visualizing the HIV-1 Protease Structure
+
+# Q4: Water molecules normally have 3 atoms. Why do we see just one atom per water molecule in this structure?
+
+This simplification is done to reduce visual clutter and make it easier to interpret the structure since water molecules are so abundant.
+
+# Q5: There is a critical “conserved” water molecule in the binding site. Can you identify this water molecule? What residue number does this water molecule have
+
+Yes, the residue number is 313.
+
+# Q6: Generate and save a figure clearly showing the two distinct chains of HIV-protease along with the ligand. You might also consider showing the catalytic residues ASP 25 in each chain and the critical water (we recommend “Ball & Stick” for these side-chains). Add this figure to your Quarto document.
+Discussion Topic: Can you think of a way in which indinavir, or even larger ligands and substrates, could enter the binding site?
+
+Ligands and substrates can enter the binding site by inducing conformational changes.
+
+## Introduction to Bio3D in R
+
+```{r}
+# Load the Bio3D package
+library(bio3d)
+
+# Read PDB file
+pdb <- read.pdb("1hsg")
+```
+```{r}
+# Quick summary of the contents of the pdb 
+pdb
+```
+
+# Q7 How many amino acid residues are there in this pdb object? 
+
+There are 198 amino acid residues.
+
+# Q8 Name one of the two non-protein residues? 
+
+HOH is one of the non-protein residues.
+
+# Q9 How many protein chains are in this structure? 
+
+There are 2 protein chains.
+
+
+```{r}
+# Find the attributes 
+attributes(pdb)
+```
+
+```{r}
+# Acess the atom attribute 
+head(pdb$atom)
+```
+
+```{r}
+# Read a new PDB structure of Adenylate Kinase and perform Normal mode analysis
+adk <- read.pdb("6s36")
+adk
+```
+
+```{r}
+# Perform flexiblity prediction
+m <- nma(adk)
+```
+
+```{r}
+plot(m)
+```
+
+```{r}
+# View a “movie” of these predicted motions/generate a molecular “trajectory” with the mktrj() function.
+mktrj(m, file="adk_m7.pdb")
+
+```
+
+
+## Comparative structure analysis of Adenylate Kinase
+
+```{r}
+# Install packages in the R console NOT your Rmd/Quarto file
+
+```
+
+# Q10. Which of the packages above is found only on BioConductor and not CRAN? 
+
+msa is found only on BioConductor.
+
+# Q11. Which of the above packages is not found on BioConductor or CRAN?: 
+
+bio3d-view is not found on BioConductor or CRAN.
+
+# Q12. True or False? Functions from the devtools package can be used to install packages from GitHub and BitBucket? 
+
+True.
+
+## Search and retrieve ADK structures
+
+```{r}
+# Search and retrieve ADK structures
+library(bio3d)
+aa <- get.seq("1ake_A")
+```
+
+```{r}
+aa
+```
+
+# How many amino acids are in this sequence, i.e. how long is this sequence? 
+
+There are 214 amino acids in this sequence.
+
+```{r}
+# Use this sequence as a query to BLAST search the PDB to find similar sequences and structures.
+
+# Blast or hmmer search 
+#b <- blast.pdb(aa)
+```
+
+```{r}
+# Plot a summary of search results
+#hits <- plot(b)
+```
+
+# Visualize and filter blast results
+
+```{r}
+# List out some 'top hits'
+#head(hits$pdb.id)
+
+```
+
+```{r}
+hits <- NULL
+hits$pdb.id <- c('1AKE_A','6S36_A','6RZE_A','3HPR_A','1E4V_A','5EJE_A','1E4Y_A','3X2S_A','6HAP_A','6HAM_A','4K46_A','3GMT_A','4PZL_A')
+```
+
+
+```{r}
+# Download releated PDB files
+files <- get.pdb(hits$pdb.id, path="pdbs", split=TRUE, gzip=TRUE)
+```
+
+## Align and superpose structures
+
+```{r}
+# Align releated PDBs
+pdbs <- pdbaln(files, fit = TRUE, exefile="msa")
+```
+
+```{r}
+# Vector containing PDB codes for figure axis
+ids <- basename.pdb(pdbs$id)
+
+# Draw schematic alignment
+plot(pdbs, labels=ids)
+```
+
+## Annotate collected PDB structures
+
+```{r}
+anno <- pdb.annotate(ids)
+unique(anno$source)
+```
+
+```{r}
+# View all available annotation data
+anno
+```
+
+
+## Principal component analysis
+
+```{r}
+# Perform PCA
+pc.xray <- pca(pdbs)
+plot(pc.xray)
+
+```
+
+# Calculate all pairwise RMSD values of the structural ensemble
+
+```{r}
+# Calculate RMSD
+rd <- rmsd(pdbs)
+
+# Structure-based clustering
+hc.rd <- hclust(dist(rd))
+grps.rd <- cutree(hc.rd, k=3)
+
+plot(pc.xray, 1:2, col="grey50", bg=grps.rd, pch=21, cex=1)
+```
+

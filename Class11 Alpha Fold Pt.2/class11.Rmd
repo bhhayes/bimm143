@@ -1,0 +1,209 @@
+---
+title: 'Class 11: Alpha Fold Pt. 2'
+author: "Brittney Hayes"
+date: "2024-02-13"
+output: word_document
+---
+
+Alphafold was run via GoogleColab at https://colab.research.google.com/github/sokrypton/ColabFold
+
+We used AplhaFold2_mmseqs2 version.
+
+The main outputs include a set of **PDB structure files** along with matching **JSON format files** that tell us how good the resulting models might be.
+
+## Custom analysis of resulting models
+
+Let's start by loading the PDB structures in Mol*
+
+```{r}
+library(bio3d)
+
+results_dir <-"HIVPrDimer_23119"
+
+# File names for all PDB models
+list.files(path ="HIVPrDimer_23119", pattern="*.pdb",
+                        full.names = TRUE)
+pdb_files <- list.files(path= "HIVPrDimer_23119",
+                        pattern="*.pdb",
+                        full.names = TRUE)
+
+# Print our PDB file names
+basename(pdb_files)
+```
+
+# Quick view of model sequences
+
+```{r}
+library(bio3d)
+
+# Read all data from Models 
+#  and superpose/fit coords
+pdbs <- pdbaln(pdb_files, fit=TRUE, exefile="msa")
+```
+
+
+```{r}
+pdbs
+```
+
+# RMSD
+
+```{r}
+rd <- rmsd(pdbs, fit=T)
+range(rd)
+```
+
+# Draw a heatmap of these RMSD matrix values
+
+```{r}
+library(pheatmap)
+
+colnames(rd) <- paste0("m",1:5)
+rownames(rd) <- paste0("m",1:5)
+pheatmap(rd)
+```
+
+# Plot the pLDDT values across all models
+
+```{r}
+# Read a reference PDB structure
+pdb <- read.pdb("1hsg")
+```
+
+```{r}
+plotb3(pdbs$b[1,], typ="l", lwd=2, sse=pdb)
+points(pdbs$b[2,], typ="l", col="red")
+points(pdbs$b[3,], typ="l", col="blue")
+points(pdbs$b[4,], typ="l", col="darkgreen")
+points(pdbs$b[5,], typ="l", col="orange")
+abline(v=100, col="gray")
+```
+
+# Improve the superposition/fitting of our models by finding the most consistent “rigid core”
+
+```{r}
+core <- core.find(pdbs)
+```
+# Use the identified core atom positions as a basis for a more suitable superposition and write out the fitted structures
+
+```{r}
+core.inds <- print(core, vol=0.5)
+```
+
+```{r}
+xyz <- pdbfit(pdbs, core.inds, outpath="corefit_structures")
+```
+
+# Examine the RMSF between positions of the structure
+
+```{r}
+rf <- rmsf(xyz)
+
+plotb3(rf, sse=pdb)
+abline(v=100, col="gray", ylab="RMSF")
+```
+
+## Predicted Alignment Error for domains
+
+```{r}
+library(jsonlite)
+
+# Listing of all PAE JSON files
+pae_files <- list.files(path=results_dir,
+                        pattern=".*model.*\\.json",
+                        full.names = TRUE)
+```
+
+# For example purposes lets read the 1st and 5th files
+
+```{r}
+pae1 <- read_json(pae_files[1],simplifyVector = TRUE)
+pae5 <- read_json(pae_files[5],simplifyVector = TRUE)
+
+attributes(pae1)
+```
+
+```{r}
+# Per-residue pLDDT scores 
+#  same as B-factor of PDB..
+head(pae1$plddt) 
+```
+
+# Checking other PAE values
+```{r}
+pae1$max_pae
+```
+
+```{r}
+pae5$max_pae
+```
+
+#Plot the N by N (where N is the number of residues) PAE scores with ggplot or with functions from the Bio3D package
+
+```{r}
+plot.dmat(pae1$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)")
+```
+
+```{r}
+plot.dmat(pae5$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)",
+          grid.col = "black",
+          zlim=c(0,30))
+```
+
+# Plot all of these using the same z range
+
+```{r}
+plot.dmat(pae1$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)",
+          grid.col = "black",
+          zlim=c(0,30))
+```
+
+## Residue conservation from alignment file
+
+```{r}
+aln_file <- list.files(path=results_dir,
+                       pattern=".a3m$",
+                        full.names = TRUE)
+aln_file
+```
+
+```{r}
+aln <- read.fasta(aln_file[1], to.upper = TRUE)
+```
+
+# How many sequences are in this alignment
+
+```{r}
+dim(aln$ali)
+```
+
+We can score residue conservation in the alignment with the conserv() function.
+
+```{r}
+sim <- conserv(aln)
+
+plotb3(sim[1:99], sse=trim.pdb(pdb, chain="A"),
+       ylab="Conservation Score")
+```
+
+# Generate a consensus sequence with a high cutoff value
+
+```{r}
+con <- consensus(aln, cutoff = 0.9)
+con$seq
+```
+
+# Map this conservation score to the Occupancy column of a PDB file for viewing in molecular viewer programs
+
+```{r}
+m1.pdb <- read.pdb(pdb_files[1])
+occ <- vec2resno(c(sim[1:99], sim[1:99]), m1.pdb$atom$resno)
+write.pdb(m1.pdb, o=occ, file="m1_conserv.pdb")
+```
+

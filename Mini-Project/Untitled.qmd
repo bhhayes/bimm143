@@ -1,0 +1,375 @@
+---
+title: "Mini-Project"
+author: "Brittney Hayes"
+format: pdf
+---
+# 1. Preparing the data
+```{r}
+#View(WisconsinCancer)
+
+# Save input data file into your Project directory
+fna.data <- "WisconsinCancer.csv"
+
+# Complete the following code to input the data and store as wisc.df
+wisc.df <- read.csv(fna.data, row.names = 1)
+
+ # View the first few rows of the dataframe
+head(wisc.df) 
+
+# We can use -1 here to remove the first column
+wisc.data <- wisc.df[,-1]
+
+# Create diagnosis vector for later
+diagnosis <- wisc.df$X
+
+
+
+```
+
+# 1. Exploratory Data Analysis
+
+Q1. How many observations are in this dataset?
+```{r}
+num_observations <- nrow(wisc.data)
+```
+Answer: 570
+
+Q2. How many of the observations have a malignant diagnosis?
+```{r}
+num_malignant <- sum(diagnosis == "M")
+```
+Answer: 212
+
+Q3. How many variables/features in the data are suffixed with _mean?
+```{r}
+num_mean_variables <- sum(grep("_mean", names(wisc.data)))
+```
+Answer: 0
+
+# 2. Principal Component Analysis
+```{r}
+str(wisc.data)
+
+# Had issues "Error in colMeans(wisc.data) : 'x' must be numeric" Converting to numeric (is.numeric) did not work)
+wisc.data$X.1<- as.numeric(as.factor(wisc.data$X.1))
+wisc.data$X.2<- as.numeric(as.factor(wisc.data$X.2))
+wisc.data$X.3<- as.numeric(as.factor(wisc.data$X.3))
+wisc.data$X.4<- as.numeric(as.factor(wisc.data$X.4))
+wisc.data$X.5<- as.numeric(as.factor(wisc.data$X.5))
+wisc.data$X.6<- as.numeric(as.factor(wisc.data$X.6))
+wisc.data$X.7<- as.numeric(as.factor(wisc.data$X.7))
+wisc.data$X.8<- as.numeric(as.factor(wisc.data$X.8))
+wisc.data$X.9<- as.numeric(as.factor(wisc.data$X.9))
+wisc.data$X.10<- as.numeric(as.factor(wisc.data$X.10))
+wisc.data$X.11<- as.numeric(as.factor(wisc.data$X.11))
+wisc.data$X.12<- as.numeric(as.factor(wisc.data$X.12))
+wisc.data$X.13<- as.numeric(as.factor(wisc.data$X.13))
+wisc.data$X.14<- as.numeric(as.factor(wisc.data$X.14))
+wisc.data$X.15<- as.numeric(as.factor(wisc.data$X.15))
+wisc.data$X.16<- as.numeric(as.factor(wisc.data$X.16))
+wisc.data$X.17<- as.numeric(as.factor(wisc.data$X.17))
+wisc.data$X.18<- as.numeric(as.factor(wisc.data$X.18))
+wisc.data$X.19<- as.numeric(as.factor(wisc.data$X.19))
+wisc.data$X.20<- as.numeric(as.factor(wisc.data$X.20))
+wisc.data$X.21<- as.numeric(as.factor(wisc.data$X.21))
+wisc.data$X.22<- as.numeric(as.factor(wisc.data$X.22))
+wisc.data$X.23<- as.numeric(as.factor(wisc.data$X.23))
+wisc.data$X.24<- as.numeric(as.factor(wisc.data$X.24))
+wisc.data$X.25<- as.numeric(as.factor(wisc.data$X.25))
+wisc.data$X.26<- as.numeric(as.factor(wisc.data$X.26))
+wisc.data$X.27<- as.numeric(as.factor(wisc.data$X.27))
+wisc.data$X.28<- as.numeric(as.factor(wisc.data$X.28))
+wisc.data$X.29<- as.numeric(as.factor(wisc.data$X.29))
+wisc.data$X.30<- as.numeric(as.factor(wisc.data$X.30))
+
+# Check column means and standard deviations
+apply(wisc.data,2,sd)
+
+numeric_data <- wisc.data[, c(1:30)]  
+means <- colMeans(numeric_data)
+```
+
+```{r}
+# Perform PCA on wisc.data (now numeric_data)
+wisc.pr <- prcomp(numeric_data, scale. = TRUE)
+
+# Look at summary of results
+summary(wisc.pr)
+
+```
+
+Q4. From your results, what proportion of the original variance is captured by the first principal components (PC1)?
+PC1 captures approximately 38.96% of the original variance.
+
+Q5. How many principal components (PCs) are required to describe at least 70% of the original variance in the data?
+2 PCs are required to describe at least 70% of the original variance in the data.
+
+Q6. How many principal components (PCs) are required to describe at least 90% of the original variance in the data?
+7 PCs are required to describe at least 90% of the original variance in the data.
+
+# 2. Interpreting PCA Results
+```{r}
+biplot(wisc.pr)
+```
+Q7. What stands out to you about this plot? Is it easy or difficult to understand? Why?
+The center of the plot stands out to me only because it is so messy. It is difficult to understand given how cluttered it is.
+
+```{r}
+
+# Scatter plot observations by components 1 and 2
+
+plot(wisc.pr$x[, c(1, 2)], 
+     xlab = "PC1", ylab = "PC2")
+```
+
+Q8. Generate a similar plot for principal components 1 and 3. What do you notice about these plots?
+```{r}
+
+plot(wisc.pr$x[, c(1, 3)], 
+     xlab = "PC1", ylab = "PC3")
+```
+Answer: I was having issues with col=diagnosis so I omitted it in these plots (Error: unexpected symbol in:
+"plot(wisc.pr$x[, c(1, 3)], col = diagnosis
+     xlab") & invalid color name 'diagnosis') but I notice that PC2 has more variance than PC3.
+
+# 2.Variance Explained
+```{r}
+# Create a data.frame for ggplot
+df <- as.data.frame(wisc.pr$x)
+df$diagnosis <- diagnosis
+
+# Load the ggplot2 package
+library(ggplot2)
+
+# Make a scatter plot colored by diagnosis
+ggplot(df) + 
+  aes(PC1, PC2, col=diagnosis) + 
+  geom_point()
+```
+```{r}
+
+# Calculate variance of each component
+pr.var <- wisc.pr$sdev^2
+head(pr.var)
+
+# Calculate total variance explained
+total_var <- sum(pr.var)
+
+# Variance explained by each principal component: pve
+pve <- pr.var / total_var
+
+# Plot variance explained for each principal component
+plot(pve, xlab = "Principal Component", 
+     ylab = "Proportion of Variance Explained", 
+     ylim = c(0, 1), type = "o")
+
+```
+```{r}
+# Alternative scree plot of the same data, note data driven y-axis
+barplot(pve, ylab = "Precent of Variance Explained",
+     names.arg=paste0("PC",1:length(pve)), las=2, axes = FALSE)
+axis(2, at=pve, labels=round(pve,2)*100 )
+```
+Q9. For the first principal component, what is the component of the loading vector (i.e. wisc.pr$rotation[,1]) for the feature concave.points_mean?
+```{r}
+# Loading vector component for feature concave.points_mean
+loading_component <- wisc.pr$rotation[, 1]
+loading_component
+
+```
+Answer: X.8 is concave points mean,  -0.25905963.
+
+Q10. What is the minimum number of principal components required to explain 80% of the variance of the data?
+```{r}
+# Cumulative proportion of variance explained
+cumulative_pve <- cumsum(pve)
+
+# Minimum number of principal components to explain 80% of the variance
+min_components <- which.max(cumulative_pve >= 0.8)
+
+```
+Answer: 7
+
+# 3. Hierarchical Clustering
+```{r}
+# Scale the wisc.data data using the "scale()" function
+data.scaled <- scale(wisc.data)
+
+# Calculate the (Euclidean) distances between all pairs of observations in the new scaled dataset
+data.dist <- dist(data.scaled)
+
+
+# Create a hierarchical clustering model using complete linkage
+wisc.hclust <- hclust(data.dist, method = "complete")
+
+```
+```{r}
+# Plot the dendrogram
+plot(wisc.hclust)
+abline( col = "red", lty = 2)
+
+```
+Q11. Using the plot() and abline() functions, what is the height at which the clustering model has 4 clusters?
+Around 10 according to my plot. However the plot on the website is different and is around 19.
+
+```{r}
+
+  # Cut the tree into 4 clusters
+  wisc.hclust.clusters <- cutree(wisc.hclust, k = 4)
+  
+  # Compare the cluster membership to the actual diagnoses.
+
+table(wisc.hclust.clusters, diagnosis)
+
+
+```
+
+Q12. Can you find a better cluster vs diagnoses match by cutting into a different number of clusters between 2 and 10?
+```{r}
+# Cut the tree into 10 clusters
+  wisc.hclust.clusters <- cutree(wisc.hclust, k = 2)
+  
+  # Compare the cluster membership to the actual diagnoses.
+
+table(wisc.hclust.clusters, diagnosis)
+
+```
+
+Q13. Which method gives your favorite results for the same data.dist dataset? Explain your reasoning.
+```{r}
+# Create hierarchical clustering models using different methods
+wisc.hclust_single <- hclust(data.dist, method = "single")
+wisc.hclust_complete <- hclust(data.dist, method = "complete")
+wisc.hclust_average <- hclust(data.dist, method = "average")
+wisc.hclust_ward <- hclust(data.dist, method = "ward.D2")
+
+# Cut the trees into clusters (e.g., let's use 4 clusters for comparison)
+wisc.hclust_single_clusters <- cutree(wisc.hclust_single, k = 4)
+wisc.hclust_complete_clusters <- cutree(wisc.hclust_complete, k = 4)
+wisc.hclust_average_clusters <- cutree(wisc.hclust_average, k = 4)
+wisc.hclust_ward_clusters <- cutree(wisc.hclust_ward, k = 4)
+
+# Compare cluster vs. diagnosis match for each method
+print("Single linkage:")
+print(table(wisc.hclust_single_clusters, diagnosis))
+print("\nComplete linkage:")
+print(table(wisc.hclust_complete_clusters, diagnosis))
+print("\nAverage linkage:")
+print(table(wisc.hclust_average_clusters, diagnosis))
+print("\nWard linkage:")
+print(table(wisc.hclust_ward_clusters, diagnosis))
+
+```
+I like the single clusters method most because the numbers are easier to look at.
+
+# 5. Combining Methods
+```{r}
+# Find the minimum number of principal components required to describe at least 90% of the variability
+cumulative_variance <- cumsum(wisc.pr$sdev^2 / sum(wisc.pr$sdev^2))
+num_components_90 <- which(cumulative_variance >= 0.9)[1]
+
+# Use the first num_components_90 principal components
+wisc.pr_reduced <- wisc.pr$x[, 1:num_components_90]
+
+# Create hierarchical clustering model with ward.D2 linkage method
+wisc.pr.hclust <- hclust(dist(wisc.pr_reduced), method = "ward.D2")
+
+plot(wisc.pr.hclust)
+```
+```{r}
+grps <- cutree(wisc.pr.hclust, k=2)
+table(grps)
+```
+```{r}
+table(grps, diagnosis)
+```
+```{r}
+plot(wisc.pr$x[,1:2], col=grps)
+```
+```{r}
+plot(wisc.pr$x[,1:2])
+```
+```{r}
+g <- as.factor(grps)
+levels(g)
+```
+```{r}
+g <- relevel(g,2)
+levels(g)
+```
+```{r}
+# Plot using our re-ordered factor 
+plot(wisc.pr$x[,1:2], col=g)
+```
+```{r}
+
+# Use the distance along the first 7 PCs for clustering
+wisc.pr.hclust <- hclust(dist(wisc.pr$x[, 1:7]), method = "ward.D2")
+
+# Cut the hierarchical clustering model into 2 clusters
+wisc.pr.hclust.clusters <- cutree(wisc.pr.hclust, k = 2)
+
+```
+
+Q15. How well does the newly created model with four clusters separate out the two diagnoses?
+```{r}
+# Compare the results from the new hierarchical clustering model with the actual diagnoses
+table(wisc.pr.hclust.clusters, diagnosis)
+
+```
+The diagnoses are separated better in this model.
+
+Q16. How well do the k-means and hierarchical clustering models you created in previous sections (i.e. before PCA) do in terms of separating the diagnoses? Again, use the table() function to compare the output of each model (wisc.km$cluster and wisc.hclust.clusters) with the vector containing the actual diagnoses.
+```{r}
+
+hclust_diagnosis_table <-table(wisc.hclust.clusters, diagnosis)
+
+```
+"Error: object 'wisc.km' not found. 
+
+# 6. Sensitivity/Specificity
+```{r}
+# Function to calculate specificity
+calculate_specificity <- function(confusion_matrix) {
+  true_negatives <- confusion_matrix[1, 1]
+  false_positives <- confusion_matrix[1, 2]
+  return(true_negatives / (true_negatives + false_positives))
+}
+
+# Function to calculate sensitivity
+calculate_sensitivity <- function(confusion_matrix) {
+  true_positives <- confusion_matrix[2, 2]
+  false_negatives <- confusion_matrix[2, 1]
+  return(true_positives / (true_positives + false_negatives))
+}
+
+# Calculate specificity and sensitivity for each clustering model
+
+hclust_specificity <- calculate_specificity(hclust_diagnosis_table)
+hclust_sensitivity <- calculate_sensitivity(hclust_diagnosis_table)
+
+# Display the results
+print(paste("Hierarchical clustering specificity:", hclust_specificity))
+print(paste("Hierarchical clustering sensitivity:", hclust_sensitivity))
+
+```
+I keep getting errors and cannot figure them out. But based on what is on the website, I would say the second model is better at separating the diagnoses.
+
+Q17. Which of your analysis procedures resulted in a clustering model with the best specificity? How about sensitivity?
+The second model is more specific and the second is more sensitive.
+
+# 7. Prediction
+```{r}
+url <- "new_samples.csv"
+url <- "https://tinyurl.com/new-samples-CSV"
+new <- read.csv(url)
+npc <- predict(wisc.pr)
+
+```
+```{r}
+plot(wisc.pr$x[,1:2], col=g)
+points(npc[,1], npc[,2], col="blue", pch=16, cex=3)
+text(npc[,1], npc[,2], c(1,2), col="white")
+```
+Q18. Which of these new patients should we prioritize for follow up based on your results?
+My plot came out too messy. Based on one on website I would say patients 1 and 2.

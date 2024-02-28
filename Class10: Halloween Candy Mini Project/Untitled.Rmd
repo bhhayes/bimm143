@@ -1,0 +1,158 @@
+---
+title: 'Class10: Halloween Candy Mini Project'
+author: "Brittney Hayes"
+date: "2024-02-12"
+output: pdf_document
+---
+# 1. Importing Candy Data
+```{r}
+candy_data <- read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/candy-power-ranking/candy-data.csv") 
+candy_file <- candy_data
+
+```
+Q1. How many different candy types are in this dataset?
+```{r}
+dim(candy_file)
+```
+```{r}
+ncol(candy_file[2:10])
+```
+There are 85 brands of candy and 9 types, I omitted a few columns that were not specifying types of candy. 
+
+Q2. How many fruity candy types are in the dataset?
+```{r}
+sum(candy_file["fruity"])
+```
+There are 38 fruity candy types.
+
+# 2. What is your favorite candy?
+
+Q3. What is your favorite candy in the dataset and what is it’s winpercent value?
+```{r}
+candy_file[65,]$winpercent
+```
+My favorite candy is Snickers and the winpercent value is 76.67378.
+
+Q4. What is the winpercent value for “Kit Kat”?
+```{r}
+candy_file[29,]$winpercent
+```
+
+Q5. What is the winpercent value for “Tootsie Roll Snack Bars”?
+```{r}
+candy_file[78,]$winpercent
+```
+
+```{r}
+#install.packages("skimr")
+library("skimr")
+skim(candy_file)
+```
+Q6. Is there any variable/column that looks to be on a different scale to the majority of the other columns in the dataset?
+```{r}
+library(skimr)
+skim(candy_file)
+```
+Sugarpercent, pricepercent, and winpercent appear different.
+
+Q7. What do you think a zero and one represent for the candy$chocolate column?
+```{r}
+table(candy_file$chocolate)
+```
+The 0 and 1 confirm if the candy type falls into this candy, 0 means it does not/false and 1 means it does/true.
+
+# 3. Overall Candy Rankings
+Q8. Plot a histogram of winpercent values
+```{r}
+hist(candy_data$winpercent, 
+     main = "Histogram of Winpercent Values",
+     xlab = "Winpercent",
+     ylab = "Frequency")
+
+```
+
+Q9. Is the distribution of winpercent values symmetrical?
+Based on the appearance of the histogram, no.
+
+Q10. Is the center of the distribution above or below 50%?
+```{r}
+mean(candy_file$winpercent)
+median(candy_file$winpercent)
+```
+Based on the mean, it's above 50% but by very little. Based on the median, it's below 50% again by little. Based on the histogram it appears below 50%. So I would say below 50%.
+
+Q11. On average is chocolate candy higher or lower ranked than fruit candy?
+```{r}
+candy_file$winpercent[as.logical(candy_file$chocolate)]
+mean(candy_file$winpercent[as.logical(candy_file$chocolate)])
+
+candy_file$winpercent[as.logical(candy_file$fruity)]
+mean(candy_file$winpercent[as.logical(candy_file$fruity)])
+```
+Chocolate candy is ranked higher than fruity candy on average.
+
+Q12. Is this difference statistically significant?
+```{r}
+chocolate <- candy_file$winpercent[as.logical(candy_file$chocolate)]
+fruit <- candy_file$winpercent[as.logical(candy_file$fruity)]
+
+t.test(chocolate,fruit)
+```
+Since the p-value is less than 0.05, yes the difference is statistically significant. 
+
+Q13. What are the five least liked candy types in this set?
+```{r}
+head(candy_file[order(candy_file$winpercent),], n=5)
+```
+The 5 least liked candy types are Nik L Nip, Boston Baked Beans, Chiclets, Super Bubble, and Jawbusters.
+
+Q14. What are the top 5 all time favorite candy types out of this set?
+```{r}
+tail(candy_file[order(candy_file$winpercent),], n=5)
+```
+The top 5 all time favorite candy types are Reese's Peanut Butter cup, Reese's Miniatures, Twix, Kit Kat, and Snickers.
+
+Q15. Make a first barplot of candy ranking based on winpercent values.
+```{r}
+#install.packages("ggplot2")
+library(ggplot2)
+
+ggplot(candy_file) + 
+  aes(x = winpercent, y = rownames(candy_file)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  labs(x = "winpercent", y = "competitorname") +
+  geom_text(aes(label=competitorname), vjust=-0.1, size=2) +
+  theme_minimal()
+
+```
+Q16. This is quite ugly, use the reorder() function to get the bars sorted by winpercent?
+```{r}
+library(ggplot2)
+
+ggplot(candy_file) + 
+  aes(x = winpercent, y = rownames(candy_file)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  labs(x = "winpercent", y = "competitorname") +
+  geom_text(aes(label=competitorname), vjust=-2, size=1) +
+  theme_minimal() + aes(winpercent, reorder(rownames(candy_file),winpercent))
+```
+```{r}
+candy <- candy_file
+my_cols=rep("black", nrow(candy))
+my_cols[as.logical(candy$chocolate)] = "chocolate"
+my_cols[as.logical(candy$bar)] = "brown"
+my_cols[as.logical(candy$fruity)] = "pink"
+
+ggplot(candy) + 
+  aes(x = winpercent, y = rownames(candy)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  labs(x = "winpercent", y = "competitorname") +
+  geom_text(aes(label=competitorname), vjust=-2, size=1) +
+  theme_minimal() + aes(winpercent, reorder(rownames(candy),winpercent)) + geom_col(fill=my_cols)
+```
+Q17. What is the worst ranked chocolate candy?
+The worst ranked chocolate candy is Sixlets.
+
+Q18. What is the best ranked fruity candy?
+The best ranked fruity candy is Starburst.
+
