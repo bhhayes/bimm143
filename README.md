@@ -1,2 +1,2 @@
 # bimm143
-Bioinformatics class
+This is my repo for my bioinformatics class
