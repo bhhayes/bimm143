@@ -1,2 +1,2 @@
-# bimm142
+# bimm143
 Bioinformatics class
