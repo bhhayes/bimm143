@@ -1,2 +1,2 @@
 # bimm143
-This is my repo for my bioinformatics class
+This repo is for my UCSD bioinformatics class. 
